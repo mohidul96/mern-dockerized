@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    container_name: mongo-docker
+    env_file:
+      - ./server/config.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    ports:
+      - "27017:27017"
+    volumes:
+      - type: bind
+        source: ./workspace
+        target: /workspace
+
+      - type: volume
+        source: mongodb_data_volume
+        target: /data/db
+        
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "28081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: secret
+      ME_CONFIG_MONGODB_URL: mongodb://root:secret@mongo:27017
+    depends_on:
+      - mongo
+  server:
+    build:
+        context: ./server
+        dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - type: bind
+        source: ./server
+        target: /usr/src/app
+    env_file:
+      - ./server/config.env
+    environment:
+      MONGOCONN_STRING: mongodb://root:secret@mongo:27017
+    depends_on:
+        - mongo
+  client:
+    build:
+        context: ./client
+        dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: ./client
+        target: /usr/src/app
+    depends_on:
+        - server
+volumes:
+  mongodb_data_volume:
+    driver: local    
+    
