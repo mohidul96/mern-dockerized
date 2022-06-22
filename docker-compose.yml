@@ -66,6 +66,15 @@ services:
         target: /usr/src/app
     depends_on:
         - server
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
 volumes:
   mongodb_data_volume:
     driver: local    
