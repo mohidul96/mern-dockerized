@@ -13,10 +13,6 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - type: bind
-        source: ./workspace
-        target: /workspace
-
       - type: volume
         source: mongodb_data_volume
         target: /data/db
@@ -36,6 +32,17 @@ services:
       ME_CONFIG_MONGODB_URL: "${MONGOCONN_STRING}"
     depends_on:
       - mongo
+
+  redis:
+    container_name: redis-cache
+    image: "redis:alpine"
+    volumes:
+      - type: bind
+        source: ./redis/redis.conf
+        target: /usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+
   server:
     container_name: express-server
     build:
@@ -51,8 +58,11 @@ services:
       - .env
     environment:
       MONGOCONN_STRING: "${MONGOCONN_STRING}"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
     depends_on:
         - mongo
+        - redis
   client:
     container_name: react-client
     build:
